@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block body %}
+  <div class="container">
+    <ul id="paper-list">
+      {% for paper in papers %}
+        <li class="paper"><h2>{{ paper.title }}</h2>{{ paper.year|safe }}</li>
+      {% else %}
+        <li class="paper paper-empty"><em> No entries here so far</em>
+      {% endfor %}
+    </ul>
+  </div>
+{% endblock %}

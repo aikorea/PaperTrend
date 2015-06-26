@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="keywords" content="" />
+  <meta name="description" content="" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta property="og:title" content="" />
+  <meta property="og:url" content=""/>
+  <meta property="og:image" content="" />
+  <meta content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" name="viewport">
+
+  <title>Paper trend</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.0/css/materialize.min.css">
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+  <div class="container">
+    <div class="row">
+      <h1 class="center-align">AI Korea</h1>
+    </div>
+
+    <div class="row">
+      <form id="search" class="col m8 s10 offset-m2 offset-s1" action="{{ url_for('search') }}" method="POST">
+        <div class="row">
+          <div class="input-field col s6">
+            <input class="validate search-input" type="text" name="query" />
+            <label for="last_name">Search query</label>
+          </div>
+          <div class="input-field col s6">
+            <input class="validate search-input" type="text" name="year" />
+            <label for="last_name">Year</label>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% block body %}{% endblock %}
+
+  <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.0/js/materialize.min.js"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
