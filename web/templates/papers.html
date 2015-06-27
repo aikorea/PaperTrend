@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<div id="content"></div>
+
+<script type="text/jsx">
+var PaperApp = React.createClass({
+  getInitialState: function() {
+    return {data: []};
+  },
+  loadPaperFromServer: function() {
+    $.ajax({
+      url: this.props.url,
+      dataType: 'json',
+      cache: false,
+      success: function(data) {
+        this.setState({data: data['papers']});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }.bind(this)
+    });
+  },
+  componentDidMount: function() {
+    this.loadPaperFromServer();
+  },
+  render: function() {
+    return (
+      <div className="container">
+        <PaperList data={this.state.data} />
+      </div>
+    );
+  }
+});
+
+var PaperList = React.createClass({
+  render: function() {
+    var paperNodes = this.props.data.map(function(paper, index) {
+      return (
+        <Paper title={paper.title} year={paper.year} key={index}>
+        </Paper>
+      );
+    });
+    return (
+      <ul className="paperList">
+        {paperNodes}
+      </ul>
+    );
+  }
+});
+
+var Paper = React.createClass({
+  render: function() {
+    return (
+      <li class="paper"><h2>{this.props.title}</h2>{this.props.year}</li>
+    );
+  }
+});
+
+React.render(
+  <PaperApp url="papers.json" />,
+  document.getElementById('content')
+);
+</script>
+
+{% endblock %}

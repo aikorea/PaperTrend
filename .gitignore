@@ -1,2 +1,8 @@
+*.DS_Store
 *py[co]
 .*.sw[op]
+
+node_modules/
+npm-debug.log
+bower_components/
+.module-cache

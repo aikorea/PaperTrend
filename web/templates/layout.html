@@ -16,6 +16,10 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.0/css/materialize.min.css">
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/react.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/JSXTransformer.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
 </head>
 
 <body>
@@ -23,29 +27,12 @@
     <div class="row">
       <h1 class="center-align">AI Korea</h1>
     </div>
-
-    <div class="row">
-      <form id="search" class="col m8 s10 offset-m2 offset-s1" action="{{ url_for('search') }}" method="POST">
-        <div class="row">
-          <div class="input-field col s6">
-            <input class="validate search-input" type="text" name="query" />
-            <label for="last_name">Search query</label>
-          </div>
-          <div class="input-field col s6">
-            <input class="validate search-input" type="text" name="year" />
-            <label for="last_name">Year</label>
-          </div>
-        </div>
-      </form>
-    </div>
   </div>
 
   {% block body %}{% endblock %}
 
   <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.0/js/materialize.min.js"></script>
-  <script src="https://fb.me/react-0.13.3.min.js"></script>
-  <script src="https://fb.me/JSXTransformer-0.13.3.js"></script>
 
   <script type="text/jsx" src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
