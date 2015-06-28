@@ -21,15 +21,16 @@ def search():
         {'title' : 'aikorea', 'year' : 2014}, 
         {'title' : 'google', 'year' : 2013}, 
         {'title' : 'deep learning', 'year' : 2012}, 
-    ]
+    ]*100
 
     if request.method == 'POST':
         query = request.form['query']
-        year = int(request.form['year'])
+        year = request.form['year']
 
         if query:
             papers = [item for item in papers if query in item['title']]
         if year:
+            year = int(year)
             papers = [item for item in papers if year == int(item['year'])]
 
     data = {'papers': papers}
