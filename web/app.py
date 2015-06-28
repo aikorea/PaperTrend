@@ -26,7 +26,7 @@ def search():
         year = request.form['year']
 
         if query:
-            papers = [item for item in papers if query in item['title']]
+            papers = [item for item in papers if query in item['title'].lower()]
         if year:
             year = int(year)
             papers = [item for item in papers if year == int(item['year'])]
