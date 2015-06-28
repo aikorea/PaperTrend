@@ -27,12 +27,10 @@
 
   {% block body %}{% endblock %}
 
+  <script src="{{ url_for('static', filename='bower_components/react/react.min.js') }}"></script>
   <script src="{{ url_for('static', filename='bower_components/jquery/dist/jquery.min.js') }}"></script>
   <script src="{{ url_for('static', filename='bower_components/materialize/dist/js/materialize.min.js') }}"></script>
 
-  <script src="{{ url_for('static', filename='bower_components/react/react.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='bower_components/react/JSXTransformer.js') }}"></script>
-
-  <script type="text/jsx" src="{{ url_for('static', filename='js/script.js') }}"></script>
+  <script src="{{ url_for('static', filename='scripts/js/main.js') }}"></script>
 </body>
 </html>
