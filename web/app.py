@@ -21,7 +21,7 @@ def search():
         {'title' : 'aikorea', 'year' : 2014}, 
         {'title' : 'google', 'year' : 2013}, 
         {'title' : 'deep learning', 'year' : 2012}, 
-    ]*100
+    ]*500
 
     if request.method == 'POST':
         query = request.form['query']
