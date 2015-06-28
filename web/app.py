@@ -2,6 +2,7 @@
 #-*- coding: utf-8 -*-
 from flask import Flask, request, session, g, redirect, url_for, abort, \
              render_template, flash, jsonify
+import json
 
 app = Flask(__name__)
 app.config.update(dict(
@@ -17,11 +18,8 @@ def list():
 
 @app.route('/papers.json', methods=['GET', 'POST'])
 def search():
-    papers = [
-        {'title' : 'aikorea', 'year' : 2014}, 
-        {'title' : 'google', 'year' : 2013}, 
-        {'title' : 'deep learning', 'year' : 2012}, 
-    ]*500
+    with open("scrapaper/papers.json") as json_file:
+    	papers = json.load(json_file)
 
     if request.method == 'POST':
         query = request.form['query']
