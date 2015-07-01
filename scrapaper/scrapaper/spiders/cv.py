@@ -14,12 +14,16 @@ class CvSpider(scrapy.Spider):
     )
 
     def parse(self, response):
-	# get all paper titles
-	sels = response.css('.ptitle').xpath('a/text()')
-	# get the year of the corresponding conference	
-	year = response.xpath('//div[@id="header_title"]/a/text()').extract()[0][-4:] 
-	for sel in sels:
-		item = ScrapaperItem()
-		item['title'] = sel.extract()
-		item['year'] = year
-		yield item
+        # get all paper titles
+        sels = response.css('.ptitle').xpath('a/text()')
+        # get the year of the corresponding conference	
+        year = response.xpath('//div[@id="header_title"]/a/text()').extract()[0][-4:] 
+        # get list of authors
+        authors = response.xpath('//dd')
+
+        for idx, sel in enumerate(sels):
+            item = ScrapaperItem()
+            item['title'] = sel.extract()
+            item['year'] = year
+            item['authors'] = authors[idx*2].xpath('./form/a/text()').extract()
+            yield item
