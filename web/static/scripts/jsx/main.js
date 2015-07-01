@@ -9,40 +9,86 @@ var PaperApp = React.createClass({
       cache: false,
       success: function(data) {
         this.setState({data: data['papers']});
-        this.chart.Line(this.dataToChart(), {'responsive':true}) ;
+        this.updateChart();
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
       }.bind(this)
     });
   },
+  componentDidMount: function() {
+    this.yearCtx = document.getElementById("year-chart").getContext("2d");
+    this.yearChart = new Chart(this.yearCtx);
+
+    this.authorCtx = document.getElementById("author-chart").getContext("2d");
+    this.authorChart = new Chart(this.authorCtx);
+
+    this.loadPaperFromServer();
+  },
+  updateChart: function() {
+    if (typeof this.yearLineChart !== 'undefined') {
+      this.yearLineChart.destroy();
+      this.authorLineChart.destroy();
+    }
+
+    var chartData = this.dataToChart();
+    this.yearLineChart = this.yearChart.Line(chartData[0], {'responsive':true}) ;
+    this.authorLineChart = this.authorChart.Line(chartData[1], {'responsive': true, 'scaleShowLabels': false}) ;
+  },
   dataToChart: function() {
     //var labels = _.uniq(_.pluck(this.state.data, 'year'));
-    var hist = _.chain(this.state.data).countBy("year").value();
-    chartData = {
-      labels: _.keys(hist),
+    var yearHist = _.chain(this.state.data).countBy("year").value();
+    var authorHist = _.chain(this.state.data)
+      .map(function(item) { return item.authors; })
+      .flatten()
+      .reduce(function(counts, word) {
+        counts[word] = (counts[word] || 0) + 1;
+        return counts;
+      }, {})
+      .value();
+
+    yearChartData = {
+      labels: _.keys(yearHist),
       datasets: [
         {
-          label : "PaperTrend",
+          label : "Paper Trend",
           fillColor: "rgba(220,220,220,0.2)",
           strokeColor: "rgba(220,220,220,1)",
           pointColor: "rgba(220,220,220,1)",
           pointStrokeColor: "#fff",
           pointHighlightFill: "#fff",
           pointHighlightStroke: "rgba(220,220,220,1)",
-          data: _.values(hist),
+          data: _.values(yearHist),
         }
       ]
     };
-    //this.setState({chartData: chartData});
-    console.log(chartData);
-    return chartData;
-  },
-  componentDidMount: function() {
-    this.ctx = document.getElementById("chart").getContext("2d");
-    this.chart = new Chart(this.ctx);
 
-    this.loadPaperFromServer();
+    var authorKeys = _.keys(authorHist);
+    var authorValues = _.values(authorHist);
+
+    authorKeys = authorValues.map(function(e,i){return i;})
+      .sort(function(a,b){return authorValues[b] - authorValues[a];})
+      .map(function(e){return authorKeys[e];});
+
+    authorValues.sort(function(a, b){return b-a});
+
+    authorChartData = {
+      labels: authorKeys.slice(0, 20),
+      datasets: [
+        {
+          label : "Author Trend",
+          fillColor: "rgba(151,187,205,0.2)",
+          strokeColor: "rgba(151,187,205,1)",
+          pointColor: "rgba(151,187,205,1)",
+          pointStrokeColor: "#fff",
+          pointHighlightFill: "#fff",
+          pointHighlightStroke: "rgba(151,187,205,1)",
+          data: authorValues.slice(0, 20),
+        }
+      ]
+    };
+
+    return [yearChartData, authorChartData];
   },
   handlePaperSubmit: function(paper) {
     $.ajax({
@@ -52,7 +98,7 @@ var PaperApp = React.createClass({
       data: paper,
       success: function(data) {
         this.setState({data: data['papers']});
-        this.chart.Line(this.dataToChart(), {'responsive':true}) ;
+        this.updateChart();
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
@@ -65,7 +111,10 @@ var PaperApp = React.createClass({
         <PaperSearchForm onPaperSubmit={this.handlePaperSubmit} />
         <div className="row">
           <div className="col s12">
-            <canvas id="chart" width="100%" height="20"></canvas>
+            <canvas id="year-chart" width="100%" height="20"></canvas>
+          </div>
+          <div className="col s12">
+            <canvas id="author-chart" width="100%" height="40"></canvas>
           </div>
         </div>
         <PaperList data={this.state.data} />
@@ -122,7 +171,7 @@ var PaperList = React.createClass({
   render: function() {
     var paperNodes = this.props.data.map(function(paper, index) {
       return (
-        <Paper title={paper.title} year={paper.year} key={index}>
+        <Paper title={paper.title} year={paper.year} authors={paper.authors} key={index}>
         </Paper>
       );
     });
@@ -138,8 +187,19 @@ var PaperList = React.createClass({
 
 var Paper = React.createClass({
   render: function() {
+    var authorNodes = this.props.authors.map(function(author, index) {
+      return (
+        <li className="author">{author}</li>
+      );
+    });
     return (
-      <li className="paper"><h2>{this.props.title}</h2>{this.props.year}</li>
+      <li className="paper">
+        <h3>{this.props.title}</h3>
+        <ul>
+          {authorNodes}
+        </ul>
+        {this.props.year}
+      </li>
     );
   }
 });
