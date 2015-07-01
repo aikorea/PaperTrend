@@ -9,13 +9,39 @@ var PaperApp = React.createClass({
       cache: false,
       success: function(data) {
         this.setState({data: data['papers']});
+        this.chart.Line(this.dataToChart(), {'responsive':true}) ;
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
       }.bind(this)
     });
   },
+  dataToChart: function() {
+    //var labels = _.uniq(_.pluck(this.state.data, 'year'));
+    var hist = _.chain(this.state.data).countBy("year").value();
+    chartData = {
+      labels: _.keys(hist),
+      datasets: [
+        {
+          label : "PaperTrend",
+          fillColor: "rgba(220,220,220,0.2)",
+          strokeColor: "rgba(220,220,220,1)",
+          pointColor: "rgba(220,220,220,1)",
+          pointStrokeColor: "#fff",
+          pointHighlightFill: "#fff",
+          pointHighlightStroke: "rgba(220,220,220,1)",
+          data: _.values(hist),
+        }
+      ]
+    };
+    //this.setState({chartData: chartData});
+    console.log(chartData);
+    return chartData;
+  },
   componentDidMount: function() {
+    this.ctx = document.getElementById("chart").getContext("2d");
+    this.chart = new Chart(this.ctx);
+
     this.loadPaperFromServer();
   },
   handlePaperSubmit: function(paper) {
@@ -26,6 +52,7 @@ var PaperApp = React.createClass({
       data: paper,
       success: function(data) {
         this.setState({data: data['papers']});
+        this.chart.Line(this.dataToChart(), {'responsive':true}) ;
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
@@ -36,6 +63,11 @@ var PaperApp = React.createClass({
     return (
       <div className="container">
         <PaperSearchForm onPaperSubmit={this.handlePaperSubmit} />
+        <div className="row">
+          <div className="col s12">
+            <canvas id="chart" width="100%" height="20"></canvas>
+          </div>
+        </div>
         <PaperList data={this.state.data} />
       </div>
     );
@@ -63,7 +95,6 @@ var PaperSearchForm = React.createClass({
   componentDidMount: function() {
     $(document.body).on('keydown', this.handleKeyDown);
   },
-
   componentWillUnMount: function() {
     $(document.body).off('keydown', this.handleKeyDown);
   },
