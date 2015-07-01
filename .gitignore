@@ -1,5 +1,6 @@
 web/static/scripts/js/main.js
 
+*.json
 *.DS_Store
 *py[co]
 .*.sw[op]
