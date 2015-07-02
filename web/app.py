@@ -18,8 +18,12 @@ def list():
 
 @app.route('/papers.json', methods=['GET', 'POST'])
 def search():
-    with open("scrapaper/papers.json") as json_file:
-    	papers = json.load(json_file)
+    with open("scrapaper/cvpapers.json") as json_file:
+    	cvpapers = json.load(json_file)
+
+    with open("scrapaper/mlpapers.json") as json_file:
+	mlpapers = json.load(json_file) 
+    papers = cvpapers + mlpapers
 
     if request.method == 'POST':
         query = request.form['query']
