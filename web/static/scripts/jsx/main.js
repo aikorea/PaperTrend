@@ -1,6 +1,6 @@
 var PaperApp = React.createClass({
   getInitialState: function() {
-    return {data: []};
+    return {data: [], title: ""};
   },
   loadPaperFromServer: function() {
     $.ajax({
@@ -90,6 +90,16 @@ var PaperApp = React.createClass({
 
     return [yearChartData, authorChartData];
   },
+  makeTitle: function(data) {
+    title = "Results ";
+
+    if (data['query'])
+      title += 'of "' + data['query'] + '"';
+    if (data['year'])
+      title += "at " + data['year'];
+
+    return title
+  },
   handlePaperSubmit: function(paper) {
     $.ajax({
       url: this.props.url,
@@ -98,6 +108,7 @@ var PaperApp = React.createClass({
       data: paper,
       success: function(data) {
         this.setState({data: data['papers']});
+        this.setState({title: this.makeTitle(data)});
         this.updateChart();
       }.bind(this),
       error: function(xhr, status, err) {
@@ -110,6 +121,9 @@ var PaperApp = React.createClass({
       <div className="container">
         <PaperSearchForm onPaperSubmit={this.handlePaperSubmit} />
         <div className="row">
+          <div className="col s12">
+            <h4 className="center-align">{this.state.title}</h4>
+          </div>
           <div className="col s12">
             <canvas id="year-chart" width="100%" height="20"></canvas>
           </div>
@@ -149,7 +163,7 @@ var PaperSearchForm = React.createClass({
   },
   render: function() {
     return (
-      <div className="row">
+      <div className="row search-form">
         <form className="col m6 s12 offset-m3" onSubmit={this.handleSubmit}>
           <div className="row">
             <div className="input-field col s6">

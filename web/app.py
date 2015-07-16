@@ -25,17 +25,20 @@ def search():
 	mlpapers = json.load(json_file) 
     papers = cvpapers + mlpapers
 
+    data = {'query': ''}
     if request.method == 'POST':
         query = request.form['query']
         year = request.form['year']
 
         if query:
             papers = [item for item in papers if query in item['title'].lower()]
+            data['query'] = query
         if year:
             year = int(year)
             papers = [item for item in papers if year == int(item['year'])]
+            data['year'] = year 
 
-    data = {'papers': papers}
+    data['papers'] = papers
 
     return jsonify(**data)
 
