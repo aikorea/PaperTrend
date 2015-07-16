@@ -2,6 +2,7 @@
 #-*- coding: utf-8 -*-
 from flask import Flask, request, session, g, redirect, url_for, abort, \
              render_template, flash, jsonify
+from glob import glob
 import json
 
 app = Flask(__name__)
@@ -12,18 +13,17 @@ app.config.update(dict(
 ))
 app.config.from_envvar('FLASKR_SETTINGS', silent=True)
 
+papers = []
+for json_file in glob("scrapaper/*papers.json"):
+    papers += json.load(open(json_file))
+
 @app.route('/')
 def list():
     return render_template('papers.html')
 
 @app.route('/papers.json', methods=['GET', 'POST'])
 def search():
-    with open("scrapaper/cvpapers.json") as json_file:
-    	cvpapers = json.load(json_file)
-
-    with open("scrapaper/mlpapers.json") as json_file:
-	mlpapers = json.load(json_file) 
-    papers = cvpapers + mlpapers
+    global papers
 
     data = {'query': ''}
     if request.method == 'POST':
