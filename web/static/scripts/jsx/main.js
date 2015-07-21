@@ -209,17 +209,48 @@ var PaperSearchForm = React.createClass({
           </div>
           <div className="row">
             <div className="col s4">
-              <a id="CVPR" className="waves-effect waves-light btn green">CVPR</a>
+              <FilterBtn name="CVPR"/>
             </div>
             <div className="col s4">
-              <a id="NIPS" className="waves-effect waves-light btn blue">NIPS</a>
+              <FilterBtn name="NIPS"/>
             </div>
             <div className="col s4">
-              <a id="JMLR" className="waves-effect waves-light btn orange">JMLR</a>
+              <FilterBtn name="JMLR"/>
             </div>
           </div>
         </form>
       </div>
+    );
+  }
+});
+
+var FilterBtn = React.createClass({
+  getInitialState() { return {disabled: false} },
+  filterConf: function(e) {
+    this.setState({disabled: !this.state.disabled});
+  },
+  render: function() {
+    var nips = false, jmlr = false, cvpr = false, year = false;
+    if (this.props.name == 'NIPS')
+      nips = true;
+    else if (this.props.name == 'CVPR')
+      cvpr = true;
+    else if (this.props.name == 'JMLR')
+      jmlr = true;
+    else 
+      year = true;
+      
+    var classes = classNames({
+      'waves-light btn': true,
+      'green': cvpr,
+      'blue': nips,
+      'orange': jmlr,
+      'cyan': year,
+      'disabled': this.state.disabled,
+    });
+
+    return (
+      <a id={this.props.name} className={classes} onClick={this.filterConf}>{this.props.name}</a>
     );
   }
 });
