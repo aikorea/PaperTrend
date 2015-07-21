@@ -6,3 +6,18 @@
 .search-form {
   margin-bottom: 0px;
 }
+
+.paper h3 {
+  font-size: 1.92rem;
+}
+
+.btn-small {
+  font-size: 0.7em;
+  height: 22px;
+  line-height: 22px;
+  padding: 0 0.5rem;
+}
+
+.tag {
+  margin: 0 0.5rem 0 0;
+}

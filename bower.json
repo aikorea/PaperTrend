@@ -16,6 +16,7 @@
     "jquery": "~2.1.4",
     "materialize": "~0.97.0",
     "Chart.js": "~1.0.2",
-    "underscore": "~1.8.3"
+    "underscore": "~1.8.3",
+    "classnames": "~2.1.3"
   }
 }

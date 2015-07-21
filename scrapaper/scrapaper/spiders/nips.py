@@ -2,6 +2,8 @@
 import scrapy
 from scrapaper.items import ScrapaperItem
 
+from urlparse import urljoin
+
 class NIPSSpider(scrapy.Spider):
     name = "nips"
     allowed_domains = ["papers.nips.cc"]
@@ -20,6 +22,7 @@ class NIPSSpider(scrapy.Spider):
         papers = response.xpath("//div/ul/li")
         for paper in papers:
             texts = paper.xpath("a/text()").extract()
+            link = urljoin(response.url, paper.xpath("a/@href").extract()[0]) + ".pdf"
             title = texts[0]
             authors = texts[1:]
-            yield ScrapaperItem(year=year, title=title, authors=authors)
+            yield ScrapaperItem(year=year, title=title, authors=authors, pdf=link)

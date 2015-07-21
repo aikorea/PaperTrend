@@ -1,20 +1,43 @@
 var PaperApp = React.createClass({
   getInitialState: function() {
-    return {data: [], title: ""};
+    return {
+      data: [],
+      filteredData: [],
+      title: "",
+      page: 0,
+      showList: false,
+      showAll: false,
+    };
   },
-  loadPaperFromServer: function() {
+  dataRequestFromServer: function(page) {
     $.ajax({
       url: this.props.url,
+      method: 'POST',
+      data: {'page' : this.state.page},
       dataType: 'json',
       cache: false,
       success: function(data) {
-        this.setState({data: data['papers']});
-        this.updateChart();
+        var newData = this.state.data.concat(data['papers']);
+        this.setState({
+          data: newData,
+          filteredData: newData,
+          page: this.state.page + 1
+        });
+        console.log(this.state.page);
+        if (!data['end']) {
+          setTimeout(this.dataRequestFromServer, 400, this.state.page);
+        } else {
+          this.setState({showList: true});
+          this.updateChart();
+        }
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
       }.bind(this)
     });
+  },
+  loadPaperFromServer: function() {
+    this.dataRequestFromServer(0);
   },
   componentDidMount: function() {
     this.yearCtx = document.getElementById("year-chart").getContext("2d");
@@ -37,8 +60,8 @@ var PaperApp = React.createClass({
   },
   dataToChart: function() {
     //var labels = _.uniq(_.pluck(this.state.data, 'year'));
-    var yearHist = _.chain(this.state.data).countBy("year").value();
-    var authorHist = _.chain(this.state.data)
+    var yearHist = _.chain(this.state.filteredData).countBy("year").value();
+    var authorHist = _.chain(this.state.filteredData)
       .map(function(item) { return item.authors; })
       .flatten()
       .reduce(function(counts, word) {
@@ -98,23 +121,31 @@ var PaperApp = React.createClass({
     if (data['year'])
       title += "at " + data['year'];
 
-    return title
+    return title;
   },
   handlePaperSubmit: function(paper) {
-    $.ajax({
-      url: this.props.url,
-      dataType: 'json',
-      type: 'POST',
-      data: paper,
-      success: function(data) {
-        this.setState({data: data['papers']});
-        this.setState({title: this.makeTitle(data)});
-        this.updateChart();
-      }.bind(this),
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-      }.bind(this)
+    this.setState({
+      showList: false,
+      showAll: false
     });
+    var query = paper['query'], year = paper['year'];
+    if (query == "" && year == "") {
+      var filteredData = this.state.data;
+    } else {
+      var filteredData = _.filter(this.state.data, function(item) {
+        if (query != "" && year != "") {
+          return item['title'].toLowerCase().indexOf(query) != -1 && query != "" && item['year'] == year && year != "";
+        } else {
+          return item['title'].toLowerCase().indexOf(query) != -1 && query != "" || item['year'] == year && year != "";
+        }
+      });
+    }
+    this.setState({
+      title: this.makeTitle(paper),
+      filteredData: filteredData,
+      showList: true
+    });
+    this.updateChart();
   },
   render: function() {
     return (
@@ -131,7 +162,8 @@ var PaperApp = React.createClass({
             <canvas id="author-chart" width="100%" height="40"></canvas>
           </div>
         </div>
-        <PaperList data={this.state.data} />
+        { this.state.showList ? <PaperList showAll={this.state.showAll} data={this.state.filteredData} /> : null }
+        { !this.state.showList ? <PaperListPreloader /> : null }
       </div>
     );
   }
@@ -175,7 +207,38 @@ var PaperSearchForm = React.createClass({
               <label>Year</label>
             </div>
           </div>
+          <div className="row">
+            <div className="col s4">
+              <a id="CVPR" className="waves-effect waves-light btn green">CVPR</a>
+            </div>
+            <div className="col s4">
+              <a id="NIPS" className="waves-effect waves-light btn blue">NIPS</a>
+            </div>
+            <div className="col s4">
+              <a id="JMLR" className="waves-effect waves-light btn orange">JMLR</a>
+            </div>
+          </div>
         </form>
+      </div>
+    );
+  }
+});
+
+var PaperListPreloader = React.createClass({
+  render: function() {
+    return (
+      <div className="row center-align">
+        <div className="preloader-wrapper big active">
+          <div className="spinner-layer spinner-blue-only">
+            <div className="circle-clipper left">
+              <div className="circle"></div>
+            </div><div className="gap-patch">
+              <div className="circle"></div>
+            </div><div className="circle-clipper right">
+              <div className="circle"></div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -183,14 +246,21 @@ var PaperSearchForm = React.createClass({
 
 var PaperList = React.createClass({
   render: function() {
-    var paperNodes = this.props.data.map(function(paper, index) {
+    var data = this.props.data;
+    if (!this.props.showAll) {
+      data = data.slice(0, 100);
+    }
+    var paperNodes = data.map(function(paper, index) {
       return (
-        <Paper title={paper.title} year={paper.year} authors={paper.authors} key={index}>
+        <Paper conference={paper.conf} title={paper.title} year={paper.year} authors={paper.authors} pdf={paper.pdf} key={index}>
         </Paper>
       );
     });
     return (
       <div className="row">
+        <div className="center-align">
+          { !this.props.showAll ? <a className="waves-effect waves-light btn-large teal">show all</a> : null }
+        </div>
         <ul className="paperList">
           {paperNodes}
         </ul>
@@ -208,12 +278,38 @@ var Paper = React.createClass({
     });
     return (
       <li className="paper">
-        <h3>{this.props.title}</h3>
+        <h3><a href={this.props.pdf}>{this.props.title}</a></h3>
         <ul>
           {authorNodes}
         </ul>
-        {this.props.year}
+        <Tag name={this.props.conference} />
+        <Tag name={this.props.year} />
       </li>
+    );
+  }
+});
+
+var Tag = React.createClass({
+  render: function() {
+    var nips = false, jmlr = false, cvpr = false, year = false;
+    if (this.props.name == 'NIPS')
+      nips = true;
+    else if (this.props.name == 'CVPR')
+      cvpr = true;
+    else if (this.props.name == 'JMLR')
+      jmlr = true;
+    else 
+      year = true;
+      
+    var classes = classNames({
+      'tag waves-light btn btn-small': true,
+      'green': cvpr,
+      'blue': nips,
+      'orange': jmlr,
+      'cyan': year,
+    });
+    return (
+      <div className={classes}>{this.props.name}</div>
     );
   }
 });
