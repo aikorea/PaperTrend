@@ -2,6 +2,7 @@
 #-*- coding: utf-8 -*-
 from flask import Flask, request, session, g, redirect, url_for, abort, \
              render_template, flash, jsonify
+from sqlitedict import SqliteDict
 from glob import glob
 import json
 
@@ -13,6 +14,7 @@ app.config.update(dict(
 ))
 app.config.from_envvar('FLASKR_SETTINGS', silent=True)
 
+# read jsons
 _papers = []
 for json_file in glob("scrapaper/*.json"):
     j = json.load(open(json_file))
@@ -21,9 +23,40 @@ for json_file in glob("scrapaper/*.json"):
     _papers += j
 print "length of papers : %s" % len(_papers)
 
+# SQLite db
+con = SqliteDict('./search_history.sqlite', autocommit=True)
+
 @app.route('/')
 def list():
     return render_template('papers.html')
+
+@app.route('/query.json')
+def query():
+    if request.args.has_key('query'):
+        query = request.args['query']
+    else:
+        query = None
+    if request.args.has_key('year'):
+        year = request.args['year']
+    else:
+        year = None
+
+    data = {}
+    if query != "":
+        query = query.lower().strip()
+        try:
+            con[query] += 1
+        except:
+            con[query] = 1
+        data[query] = con[query]
+    if year != "":
+        try:
+            con[year] += 1
+        except:
+            con[year] = 1
+        data[year] = con[year]
+
+    return jsonify(**data)
 
 @app.route('/papers.json', methods=['GET', 'POST'])
 def search():
@@ -49,9 +82,8 @@ def search():
         else:
             count = 3000
 
-        print page, count
-
         if query != None:
+            query = query.lower().strip()
             papers = [item for item in papers if query in item['title'].lower()]
             data['query'] = query
         if year != None:

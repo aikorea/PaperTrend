@@ -1,5 +1,10 @@
 var PaperApp = React.createClass({
   getInitialState: function() {
+    var conferences = ['NIPS', 'JMLR', 'CVPR'];
+    var includingFilters = {};
+    for (var i in conferences) {
+      includingFilters[conferences[i]] = true;
+    }
     return {
       data: [],
       filteredData: [],
@@ -7,6 +12,8 @@ var PaperApp = React.createClass({
       page: 0,
       showList: false,
       showAll: false,
+      conferences: conferences,
+      includingFilters: includingFilters,
     };
   },
   dataRequestFromServer: function(page) {
@@ -113,26 +120,48 @@ var PaperApp = React.createClass({
 
     return [yearChartData, authorChartData];
   },
-  makeTitle: function(data) {
-    title = "Results ";
+  getTitle: function(options) {
+    var title = "Results ", query = options['query'], year = options['year'];
 
-    if (data['query'])
-      title += 'of "' + data['query'] + '"';
-    if (data['year'])
-      title += "at " + data['year'];
+    if (query)
+      title += 'of "' + query + '"';
+    if (year)
+      title += "at " + year;
 
     return title;
   },
-  handlePaperSubmit: function(paper) {
-    this.setState({
-      showList: false,
-      showAll: false
-    });
-    var query = paper['query'], year = paper['year'];
-    if (query == "" && year == "") {
-      var filteredData = this.state.data;
-    } else {
-      var filteredData = _.filter(this.state.data, function(item) {
+  handlePaperSubmit: function(options) {
+    var query = options['query'],
+        year = options['year'],
+        conference = options['conference'],
+        filteredData = this.state.data,
+        includingFilters = this.state.includingFilters;
+
+    if (conference) {
+      var name = conference[0], disabled = conference[1];
+
+      includingFilters[name] = disabled;
+      this.setState({includingFilters: includingFilters});
+    }
+
+    for (var i in this.state.conferences) {
+      var conf = this.state.conferences[i];
+
+      filteredData = _.filter(filteredData, function(item) {
+        if (item['conf'] == conf && !includingFilters[conf])
+          return false;
+        else
+          return true;
+      });
+    }
+
+    if (query || year) {
+      this.setState({
+        showList: false,
+        showAll: false,
+        title: this.getTitle(options),
+      });
+      filteredData = _.filter(filteredData, function(item) {
         if (query != "" && year != "") {
           return item['title'].toLowerCase().indexOf(query) != -1 && query != "" && item['year'] == year && year != "";
         } else {
@@ -140,17 +169,32 @@ var PaperApp = React.createClass({
         }
       });
     }
+
     this.setState({
-      title: this.makeTitle(paper),
       filteredData: filteredData,
       showList: true
-    });
-    this.updateChart();
+    }, this.updateChart);
+  },
+  changeShowAll: function() {
+    var me = this;
+
+    this.setState({
+      showList: false
+      }, function() {
+        setTimeout(function() {
+          me.setState({
+            showAll: !me.state.showAll
+          }, function() {
+            me.setState({showList: true});
+          });
+        }, 400);
+      }
+    );
   },
   render: function() {
     return (
       <div className="container">
-        <PaperSearchForm onPaperSubmit={this.handlePaperSubmit} />
+        <PaperSearchForm conferences={this.state.conferences} onPaperSubmit={this.handlePaperSubmit} />
         <div className="row">
           <div className="col s12">
             <h4 className="center-align">{this.state.title}</h4>
@@ -162,7 +206,7 @@ var PaperApp = React.createClass({
             <canvas id="author-chart" width="100%" height="40"></canvas>
           </div>
         </div>
-        { this.state.showList ? <PaperList showAll={this.state.showAll} data={this.state.filteredData} /> : null }
+        { this.state.showList ? <PaperList conferences={this.state.conferences} showAll={this.state.showAll} data={this.state.filteredData} onChangeShowAll={this.changeShowAll} /> : null }
         { !this.state.showList ? <PaperListPreloader /> : null }
       </div>
     );
@@ -180,6 +224,20 @@ var PaperSearchForm = React.createClass({
     this.props.onPaperSubmit({query: query, year: year});
     React.findDOMNode(this.refs.query).value = '';
     React.findDOMNode(this.refs.year).value = '';
+    $.ajax({
+      url: "query.json",
+      method: 'GET',
+      data: {'query' : query, 'year' : year},
+      dataType: 'json',
+      cache: false,
+      success: function(data) {
+        console.log(data);
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }.bind(this)
+    });
+
     return;
   },
   handleKeyDown: function(event) {
@@ -193,7 +251,21 @@ var PaperSearchForm = React.createClass({
   componentWillUnMount: function() {
     $(document.body).off('keydown', this.handleKeyDown);
   },
+  handleFilterOnClick: function(options) {
+    this.props.onPaperSubmit(options);
+  },
   render: function() {
+    var conferences = this.props.conferences,
+        divClassName = "center-align col s" + 12 / conferences.length,
+        handleFilterOnClick = this.handleFilterOnClick;
+
+    var FilterBtns = conferences.map(function(conference, index) {
+      return (
+        <div className={divClassName}>
+          <FilterBtn onFilterOnClick={handleFilterOnClick} name={conference}/>
+        </div>
+      );
+    });
     return (
       <div className="row search-form">
         <form className="col m6 s12 offset-m3" onSubmit={this.handleSubmit}>
@@ -208,15 +280,7 @@ var PaperSearchForm = React.createClass({
             </div>
           </div>
           <div className="row">
-            <div className="col s4">
-              <FilterBtn name="CVPR"/>
-            </div>
-            <div className="col s4">
-              <FilterBtn name="NIPS"/>
-            </div>
-            <div className="col s4">
-              <FilterBtn name="JMLR"/>
-            </div>
+            {FilterBtns}
           </div>
         </form>
       </div>
@@ -228,6 +292,7 @@ var FilterBtn = React.createClass({
   getInitialState() { return {disabled: false} },
   filterConf: function(e) {
     this.setState({disabled: !this.state.disabled});
+    this.props.onFilterOnClick({'conference': [this.props.name, this.state.disabled]});
   },
   render: function() {
     var nips = false, jmlr = false, cvpr = false, year = false;
@@ -276,8 +341,12 @@ var PaperListPreloader = React.createClass({
 });
 
 var PaperList = React.createClass({
+  onChangeShowAll: function() {
+    this.props.onChangeShowAll();
+  },
   render: function() {
-    var data = this.props.data;
+    var data = this.props.data,
+        isShowAll = data.length > 100;
     if (!this.props.showAll) {
       data = data.slice(0, 100);
     }
@@ -290,7 +359,7 @@ var PaperList = React.createClass({
     return (
       <div className="row">
         <div className="center-align">
-          { !this.props.showAll ? <a className="waves-effect waves-light btn-large teal">show all</a> : null }
+          { !this.props.showAll && isShowAll ? <a className="waves-effect waves-light btn-large teal" onClick={this.onChangeShowAll}>show all</a> : null }
         </div>
         <ul className="paperList">
           {paperNodes}
