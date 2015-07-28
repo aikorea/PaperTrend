@@ -1,6 +1,7 @@
 var PaperApp = React.createClass({
   getInitialState: function() {
-    var conferences = ['NIPS', 'JMLR', 'CVPR'];
+    //var conferences = ['NIPS', 'JMLR', 'CVPR'];
+    var conferences = ['ML', 'CV'];
     var includingFilters = {};
     for (var i in conferences) {
       includingFilters[conferences[i]] = true;
@@ -148,7 +149,12 @@ var PaperApp = React.createClass({
       var conf = this.state.conferences[i];
 
       filteredData = _.filter(filteredData, function(item) {
-        if (item['conf'] == conf && !includingFilters[conf])
+        //if (item['conf'] == conf && !includingFilters[conf])
+        if (item['conf'] == 'CVPR' && !includingFilters['CV'])
+          return false;
+        else if (item['conf'] == 'NIPS' && !includingFilters['ML'])
+          return false;
+        else if (item['conf'] == 'JMLR' && !includingFilters['ML'])
           return false;
         else
           return true;
@@ -295,21 +301,28 @@ var FilterBtn = React.createClass({
     this.props.onFilterOnClick({'conference': [this.props.name, this.state.disabled]});
   },
   render: function() {
-    var nips = false, jmlr = false, cvpr = false, year = false;
+    /*var nips = false, jmlr = false, cvpr = false;
     if (this.props.name == 'NIPS')
       nips = true;
     else if (this.props.name == 'CVPR')
       cvpr = true;
     else if (this.props.name == 'JMLR')
-      jmlr = true;
+      jmlr = true;*/
+    var ml = false, cv = false, year = false;
+    if (this.props.name == 'CV')
+      cv = true;
+    else if (this.props.name == 'ML')
+      ml = true;
     else 
       year = true;
       
     var classes = classNames({
       'waves-light btn': true,
-      'green': cvpr,
+      /*'green': cvpr,
       'blue': nips,
-      'orange': jmlr,
+      'orange': jmlr,*/
+      'green': cv,
+      'blue': ml,
       'cyan': year,
       'disabled': this.state.disabled,
     });
