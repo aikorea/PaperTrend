@@ -1,3 +1,5 @@
+yearChart = null, authorChart = null;
+
 var PaperApp = React.createClass({
   getInitialState: function() {
     //var conferences = ['NIPS', 'JMLR', 'CVPR'];
@@ -10,6 +12,7 @@ var PaperApp = React.createClass({
       data: [],
       filteredData: [],
       title: "",
+      authorLimit: 20, 
       page: 0,
       showList: false,
       showAll: false,
@@ -37,6 +40,12 @@ var PaperApp = React.createClass({
         } else {
           this.setState({showList: true});
           this.updateChart();
+
+          dynamicAspectRatio = this.dynamicAspectRatio;
+          $(window).resize(function(){
+            dynamicAspectRatio(true);
+          });
+          dynamicAspectRatio(true);
         }
       }.bind(this),
       error: function(xhr, status, err) {
@@ -46,6 +55,31 @@ var PaperApp = React.createClass({
   },
   loadPaperFromServer: function() {
     this.dataRequestFromServer(0);
+  },
+  dynamicAspectRatio: function(update) {
+    var width = $(window).width();
+
+    if (width <= 468) {
+      yearChart.chart.aspectRatio = 2.5;
+      authorChart.chart.aspectRatio = 1.5;
+      this.setState({authorLimit:7});
+    } else if (width <= 600) {
+      yearChart.chart.aspectRatio = 3;
+      authorChart.chart.aspectRatio = 2;
+      this.setState({authorLimit:12});
+    } else if (width <= 992) {
+      yearChart.chart.aspectRatio = 3.5;
+      authorChart.chart.aspectRatio = 2;
+      this.setState({authorLimit:17});
+    } else {
+      yearChart.chart.aspectRatio = 4;
+      authorChart.chart.aspectRatio = 2.5;
+      this.setState({authorLimit:20});
+    }
+    console.log("~~~~~~~~~~~",yearChart.chart.aspectRatio);
+    if (update) {
+      this.updateChart();
+    }
   },
   componentDidMount: function() {
     this.yearCtx = document.getElementById("year-chart").getContext("2d");
@@ -63,8 +97,10 @@ var PaperApp = React.createClass({
     }
 
     var chartData = this.dataToChart();
-    this.yearLineChart = this.yearChart.Line(chartData[0], {'responsive':true}) ;
-    this.authorLineChart = this.authorChart.Line(chartData[1], {'responsive': true, 'scaleShowLabels': false}) ;
+    this.yearLineChart = this.yearChart.Line(chartData[0], {'responsive':true});
+    this.authorLineChart = this.authorChart.Line(chartData[1], {'responsive': true, 'scaleShowLabels': false});
+
+    yearChart = this.yearLineChart, authorChart = this.authorLineChart;
   },
   dataToChart: function() {
     //var labels = _.uniq(_.pluck(this.state.data, 'year'));
@@ -104,7 +140,7 @@ var PaperApp = React.createClass({
     authorValues.sort(function(a, b){return b-a});
 
     authorChartData = {
-      labels: authorKeys.slice(0, 20),
+      labels: authorKeys.slice(0, this.state.authorLimit),
       datasets: [
         {
           label : "Author Trend",
@@ -205,10 +241,8 @@ var PaperApp = React.createClass({
           <div className="col s12">
             <h4 className="center-align">{this.state.title}</h4>
           </div>
-          <div className="col s12">
+          <div id="chart-container" className="col s12">
             <canvas id="year-chart" width="100%" height="20"></canvas>
-          </div>
-          <div className="col s12">
             <canvas id="author-chart" width="100%" height="40"></canvas>
           </div>
         </div>
