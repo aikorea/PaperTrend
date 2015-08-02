@@ -34,7 +34,6 @@ var PaperApp = React.createClass({
           filteredData: newData,
           page: this.state.page + 1
         });
-        console.log(this.state.page);
         if (!data['end']) {
           setTimeout(this.dataRequestFromServer, 400, this.state.page);
         } else {
@@ -76,7 +75,6 @@ var PaperApp = React.createClass({
       authorChart.chart.aspectRatio = 2.5;
       this.setState({authorLimit:20});
     }
-    console.log("~~~~~~~~~~~",yearChart.chart.aspectRatio);
     if (update) {
       this.updateChart();
     }
@@ -203,11 +201,29 @@ var PaperApp = React.createClass({
         showAll: false,
         title: this.getTitle(options),
       });
+      var years, start_year, end_year, year_spliters = ["~", "-"];
+      for (var i in year_spliters) {
+        var spliter = year_spliters[i];
+
+        if (year.indexOf(spliter) != -1) {
+          years = year.split(spliter),
+          start_year = parseInt(years[0].trim()),
+          end_year = parseInt(years[1].trim());
+
+          break;
+        }
+      }
       filteredData = _.filter(filteredData, function(item) {
-        if (query != "" && year != "") {
-          return item['title'].toLowerCase().indexOf(query) != -1 && query != "" && item['year'] == year && year != "";
+        var year_check;
+        if (end_year) {
+          year_check = start_year <= item['year'] && item['year'] <= end_year;
         } else {
-          return item['title'].toLowerCase().indexOf(query) != -1 && query != "" || item['year'] == year && year != "";
+          year_check = item['year'] == year;
+        }
+        if (query != "" && year != "") {
+          return item['title'].toLowerCase().indexOf(query) != -1 && query != "" && year_check && year != "";
+        } else {
+          return item['title'].toLowerCase().indexOf(query) != -1 && query != "" || year_check && year != "";
         }
       });
     }
@@ -316,7 +332,7 @@ var PaperSearchForm = React.createClass({
             </div>
             <div className="input-field col s6">
               <input id="year" type="text" ref="year" className="validate" />
-              <label>Year</label>
+              <label>Year (ex. 2011, 2011-2014)</label>
             </div>
           </div>
           <div className="row">
